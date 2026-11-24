@@ -1,15 +1,17 @@
 {
-  "name": "farmer-qaz-functions",
-  "description": "FARMER QAZ v2.1 Backend Cloud Functions (RBAC, Full-Group Vet Treatments, AI Quotas, Ownership Transfer)",
-  "main": "index.js",
-  "engines": {
-    "node": "20"
-  },
+  "name": "farmer-qaz-android",
+  "version": "2.1.2",
+  "private": true,
+  "description": "FARMER QAZ Android application",
   "scripts": {
-    "test": "node ../tests/run_unit_tests.mjs"
+    "test": "node tests/run_unit_tests.mjs",
+    "android:sync": "cap sync android"
   },
   "dependencies": {
-    "firebase-admin": "^12.5.0",
-    "firebase-functions": "^6.0.1"
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/core": "^7.4.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3"
   }
 }
