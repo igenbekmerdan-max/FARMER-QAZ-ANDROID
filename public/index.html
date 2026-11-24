@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#176b45">
+  <title>FARMER QAZ — Smart Farm Platform v2.1.2</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+  <!-- AUTH & ENVIRONMENT SETUP SCREEN -->
+  <div id="authScreen" class="auth-shell">
+    <div class="auth-card">
+      <div class="brand-row">
+        <div class="brand-mark">🌱</div>
+        <div>
+          <h1>FARMER QAZ</h1>
+          <small data-i18n="subtitle">ҰЛТТЫҚ ЦИФРЛЫҚ МАЛ ШАРУАШЫЛЫҒЫ</small>
+        </div>
+        <button id="authLangBtn" class="pill" style="margin-left:auto">ҚАЗ / РУС</button>
+      </div>
+
+      <div id="configWarningBanner" class="banner banner-warn">
+        <div>
+          <strong data-i18n="cfgTitle">Firebase конфигурациясы қосылмаған</strong><br>
+          <span data-i18n="cfgDesc">Өндірістік режим үшін Firebase баптауларын енгізіңіз немесе жергілікті офлайн сынақ режимін таңдаңыз.</span>
+        </div>
+        <button id="openConfigBtn" class="btn btn-secondary" data-i18n="configureBtn">Баптау</button>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button id="tabLoginBtn" class="btn btn-primary" style="flex:1" data-i18n="loginTab">Кіру</button>
+        <button id="tabRegBtn" class="btn btn-secondary" style="flex:1" data-i18n="registerTab">Тіркелу</button>
+      </div>
+
+      <form id="loginForm" class="form-grid">
+        <div class="field full">
+          <label data-i18n="emailLabel">Электрондық пошта</label>
+          <input id="loginEmail" type="email" required placeholder="farmer@example.kz">
+        </div>
+        <div class="field full">
+          <label data-i18n="passLabel">Құпиясөз</label>
+          <input id="loginPass" type="password" required minlength="6" placeholder="••••••••">
+        </div>
+        <div class="field full">
+          <button type="submit" class="btn btn-primary" data-i18n="loginBtn">Жүйеге кіру</button>
+        </div>
+      </form>
+
+      <form id="registerForm" class="form-grid hidden">
+        <div class="field full">
+          <label data-i18n="fullNameLabel">Аты-жөні</label>
+          <input id="regName" type="text" required placeholder="Мердан Әлімов">
+        </div>
+        <div class="field full">
+          <label data-i18n="emailLabel">Электрондық пошта</label>
+          <input id="regEmail" type="email" required placeholder="farmer@example.kz">
+        </div>
+        <div class="field full">
+          <label data-i18n="passLabel">Құпиясөз (кемінде 8 таңба)</label>
+          <input id="regPass" type="password" required minlength="8" placeholder="••••••••">
+        </div>
+        <div class="field full">
+          <label data-i18n="accountModeLabel">Тіркелу түрі</label>
+          <select id="regMode">
+            <option value="create_farm" data-i18n="modeCreateFarm">Жаңа шаруашылық ашу (Фермер-иесі)</option>
+            <option value="join_farm" data-i18n="modeJoinFarm">Шақыру токенімен қосылу (Фермер мақұлдауымен)</option>
+          </select>
+        </div>
+        <div id="createFarmFields" class="field full">
+          <label data-i18n="farmNameLabel">Шаруашылық атауы</label>
+          <input id="regFarmName" type="text" placeholder="«Береке» ШҚ">
+        </div>
+        <div id="joinFarmFields" class="field full hidden">
+          <label data-i18n="inviteTokenLabel">Шақыру токені (FQ-XXXXXXXXXXXX)</label>
+          <input id="regInviteToken" type="text" placeholder="FQ-A1B2C3D4E5F6">
+        </div>
+        <div class="field full">
+          <button type="submit" class="btn btn-primary" data-i18n="registerBtn">Тіркелу</button>
+        </div>
+      </form>
+
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <span class="muted" style="font-size:11px" data-i18n="sandboxNote">Серверсіз тексеру (тек жергілікті IndexedDB):</span>
+        <button id="enterSandboxBtn" class="btn btn-soft" data-i18n="sandboxBtn">Жергілікті режим (Offline Sandbox)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APPLICATION SHELL -->
+  <div id="appShell" class="app hidden">
+    <aside id="sidebar" class="sidebar">
+      <div class="brand-row" style="margin-bottom:14px">
+        <div class="brand-mark">🌱</div>
+        <div>
+          <strong style="font-size:16px">FARMER QAZ</strong><br>
+          <small id="modeBadgeText" class="muted">CLOUD</small>
+        </div>
+      </div>
+
+      <div class="nav-group" data-i18n="navMain">БАСҚАРУ</div>
+      <nav id="navList" class="nav"></nav>
+
+      <div class="side-foot">
+        <div class="farm-box">
+          <strong id="sideFarmName">—</strong>
+          <div id="sideUserRole" class="muted" style="margin-top:3px">—</div>
+          <div id="sideSyncStatus" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="top-left">
+          <button id="mobileMenuBtn" class="btn btn-secondary mobile-only">☰</button>
+          <span class="muted">FARMER QAZ /</span>
+          <strong id="pageCrumb">Басты бет</strong>
+        </div>
+        <div class="top-right">
+          <span id="netStatusBadge" class="badge badge-green">● Онлайн</span>
+          <button id="syncNowBtn" class="pill" data-i18n="syncBtn">Синхрондау</button>
+          <button id="conflictsBtn" class="pill hidden" style="border-color:var(--amber);color:#92400e">⚠ Қақтығыстар (<span id="conflictCount">0</span>)</button>
+          <button id="langBtn" class="pill">ҚАЗ / РУС</button>
+          <button id="logoutBtn" class="btn btn-secondary" data-i18n="logoutBtn">Шығу</button>
+        </div>
+      </header>
+
+      <div id="sandboxBanner" class="banner banner-info hidden">
+        <span data-i18n="sandboxActiveMsg">Жергілікті офлайн сынақ режимі: деректер тек осы браузердің IndexedDB қорында сақталады. Бұлттық синхрондау үшін Firebase конфигурациясын қосыңыз.</span>
+        <button id="bannerConfigBtn" class="btn btn-secondary" data-i18n="configureBtn">Firebase қосу</button>
+      </div>
+
+      <div id="pendingBanner" class="banner banner-warn hidden">
+        <span data-i18n="pendingApprovalMsg">Сіздің шаруашылыққа қосылу өтініміңіз фермер-иесінің мақұлдауын күтуде. Мақұлданғанға дейін деректерге қолжетімділік шектелген.</span>
+      </div>
+
+      <!-- DYNAMIC PAGE CONTAINER -->
+      <div id="pageRoot"></div>
+    </main>
+  </div>
+
+  <!-- MODAL: FIREBASE CONFIG -->
+  <div id="configModal" class="modal-back" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="panel-head">
+        <h3 data-i18n="cfgModalTitle">Firebase өндірістік конфигурациясы</h3>
+        <button class="btn btn-secondary" data-close-modal="configModal">✕</button>
+      </div>
+      <p class="muted" style="font-size:12px" data-i18n="cfgModalHelp">Firebase Console жобасынан алынған Web Config JSON-ды енгізіңіз. Gemini API кілті МҰНДА енгізілмейді — ол тек Firebase Cloud Functions Secret Manager ішінде сақталады.</p>
+      <div class="field full" style="margin-bottom:14px">
+        <label>firebaseConfig (JSON)</label>
+        <textarea id="firebaseConfigInput" rows="7" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","appId":"..."}'></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px">
+        <button class="btn btn-secondary" data-close-modal="configModal" data-i18n="cancelBtn">Болдырмау</button>
+        <button id="saveConfigBtn" class="btn btn-primary" data-i18n="saveBtn">Сақтау және қайта жүктеу</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CONFLICT RESOLUTION -->
+  <div id="conflictModal" class="modal-back" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="panel-head">
+        <h3 data-i18n="conflictTitle">Синхрондау қақтығыстарын шешу</h3>
+        <button class="btn btn-secondary" data-close-modal="conflictModal">✕</button>
+      </div>
+      <div id="conflictList"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: GENERIC DYNAMIC CONTENT -->
+  <div id="dynamicModal" class="modal-back" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="panel-head">
+        <h3 id="dynamicModalTitle"></h3>
+        <button class="btn btn-secondary" data-close-modal="dynamicModal">✕</button>
+      </div>
+      <div id="dynamicModalBody"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
