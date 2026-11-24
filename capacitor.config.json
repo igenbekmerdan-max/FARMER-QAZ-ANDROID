@@ -1,0 +1,21 @@
+{
+  "appId": "kz.farmerqaz.app",
+  "appName": "FARMER QAZ",
+  "webDir": "public",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "cleartext": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1800,
+      "backgroundColor": "#176b45",
+      "showSpinner": false
+    },
+    "Camera": {
+      "saveToGallery": false,
+      "allowEditing": false
+    }
+  }
+}

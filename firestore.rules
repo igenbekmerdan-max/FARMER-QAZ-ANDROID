@@ -1,0 +1,121 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function memberDoc(farmId) {
+      return get(/databases/$(database)/documents/farms/$(farmId)/members/$(request.auth.uid));
+    }
+
+    function isActiveMember(farmId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/farms/$(farmId)/members/$(request.auth.uid))
+        && memberDoc(farmId).data.status == 'active';
+    }
+
+    function hasRole(farmId, role) {
+      return isActiveMember(farmId) && role in memberDoc(farmId).data.roles;
+    }
+
+    function isOwner(farmId) {
+      return hasRole(farmId, 'owner');
+    }
+
+    // User profile (self-only)
+    match /users/{uid} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Invite tokens are ONLY managed via Cloud Functions
+    match /invites/{token} {
+      allow read, write: if false;
+    }
+
+    // Multi-tenant Farm documents
+    match /farms/{farmId} {
+      allow read: if isActiveMember(farmId);
+      allow create: if false; // Strictly via createFarm Cloud Function
+      allow update: if isOwner(farmId)
+        && request.resource.data.ownerUid == resource.data.ownerUid;
+      allow delete: if false;
+
+      // Members & RBAC (Strictly via Cloud Functions; owner cannot be assigned via approveMemberRole)
+      match /members/{uid} {
+        allow read: if isActiveMember(farmId) || (isSignedIn() && request.auth.uid == uid);
+        allow create, update, delete: if false;
+      }
+
+      // AI Usage / Quotas (Server-only via Cloud Functions)
+      match /aiUsage/{dayId} {
+        allow read: if isOwner(farmId);
+        allow write: if false;
+      }
+
+      // Animals (8 species, pagination ready)
+      match /animals/{animalId} {
+        allow read: if isActiveMember(farmId);
+        allow create, update: if hasRole(farmId, 'owner') || hasRole(farmId, 'shepherd') || hasRole(farmId, 'vet');
+        allow delete: if isOwner(farmId);
+      }
+
+      // Veterinary logs:
+      // - Owner & Vet can write treatments and alerts (group treatments should use recordVetTreatment Cloud Function)
+      // - Shepherd can ONLY create emergency_alert entries
+      match /vetLogs/{logId} {
+        allow read: if isActiveMember(farmId);
+        allow create: if hasRole(farmId, 'owner') || hasRole(farmId, 'vet')
+          || (hasRole(farmId, 'shepherd') && request.resource.data.type == 'emergency_alert');
+        allow update: if hasRole(farmId, 'owner') || hasRole(farmId, 'vet');
+        allow delete: if false; // Medical records are immutable
+      }
+
+      // Tasks:
+      // - Owner & Shepherd create/update any task
+      // - Assigned Worker can ONLY update completion fields (aligned with app.js: completedAtMs, updatedAtMs, _syncStatus)
+      match /tasks/{taskId} {
+        allow read: if isActiveMember(farmId);
+        allow create: if hasRole(farmId, 'owner') || hasRole(farmId, 'shepherd');
+        allow update: if hasRole(farmId, 'owner') || hasRole(farmId, 'shepherd')
+          || (hasRole(farmId, 'worker')
+              && resource.data.assignedTo == request.auth.uid
+              && request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['status', 'photoProofUrl', 'completedAtMs', 'updatedAtMs', '_syncStatus'])
+              && request.resource.data.status in ['in_progress', 'done']);
+        allow delete: if isOwner(farmId);
+      }
+
+      // Inventory & Finance
+      match /inventory/{itemId} {
+        allow read: if hasRole(farmId, 'owner') || hasRole(farmId, 'worker') || hasRole(farmId, 'shepherd');
+        allow create, update: if hasRole(farmId, 'owner') || hasRole(farmId, 'worker');
+        allow delete: if isOwner(farmId);
+      }
+
+      match /finance/{txId} {
+        allow read, create, update: if isOwner(farmId);
+        allow delete: if false;
+      }
+
+      // Team Chat
+      match /chat/{msgId} {
+        allow read: if isActiveMember(farmId);
+        allow create: if isActiveMember(farmId)
+          && request.resource.data.senderUid == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 1000;
+        allow update, delete: if false;
+      }
+
+      // Immutable Audit Logs
+      match /auditLogs/{auditId} {
+        allow read: if isOwner(farmId);
+        allow create: if isActiveMember(farmId);
+        allow update, delete: if false;
+      }
+    }
+  }
+}
