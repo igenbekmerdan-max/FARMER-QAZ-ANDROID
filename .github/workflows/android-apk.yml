@@ -55,7 +55,7 @@ jobs:
               line='id("com.google.gms.google-services") version "4.6.0" apply false' if root.suffix=='.kts' else "id 'com.google.gms.google-services' version '4.6.0' apply false"
               m=re.search(r'plugins\s*\{',rt)
               rt=rt[:m.end()]+'\n    '+line+rt[m.end():] if m else 'plugins {\n    '+line+'\n}\n\n'+rt
-         root.write_text(block + '\n\n' + rt.replace(block, '')).
+         root.write_text(block + '\n\n' + rt.replace(block, ''))
           at=app.read_text()
           if 'com.google.gms.google-services' not in at:
               line='id("com.google.gms.google-services")' if app.suffix=='.kts' else "id 'com.google.gms.google-services'"
