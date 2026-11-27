@@ -24,6 +24,29 @@ jobs:
       - run: npm install
       - run: npm test
       - run: npx cap add android
+      - name: Configure Google Services Gradle plugin
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          roots=[Path('android/build.gradle.kts'),Path('android/build.gradle')]
+          apps=[Path('android/app/build.gradle.kts'),Path('android/app/build.gradle')]
+          root=next((p for p in roots if p.exists()),None); app=next((p for p in apps if p.exists()),None)
+          if not root or not app: raise SystemExit('Generated Gradle files missing')
+          rt=root.read_text()
+          if 'com.google.gms.google-services' not in rt:
+              line='id("com.google.gms.google-services") version "4.6.0" apply false' if root.suffix=='.kts' else "id 'com.google.gms.google-services' version '4.6.0' apply false"
+              m=re.search(r'plugins\\s*\\{',rt)
+              rt=rt[:m.end()]+'\\n    '+line+rt[m.end():] if m else 'plugins {\\n    '+line+'\\n}\\n\\n'+rt
+              root.write_text(rt)
+          at=app.read_text()
+          if 'com.google.gms.google-services' not in at:
+              line='id("com.google.gms.google-services")' if app.suffix=='.kts' else "id 'com.google.gms.google-services'"
+              m=re.search(r'plugins\\s*\\{',at)
+              at=at[:m.end()]+'\\n    '+line+at[m.end():] if m else 'plugins {\\n    '+line+'\\n}\\n\\n'+at
+              app.write_text(at)
+          print('Google Services plugin applied')
+          PY
       - run: npx cap sync android
       - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
