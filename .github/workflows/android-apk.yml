@@ -34,12 +34,21 @@ jobs:
           root=next((p for p in roots if p.exists()),None); app=next((p for p in apps if p.exists()),None)
           if not root or not app: raise SystemExit('Generated Gradle files missing')
           rt=root.read_text()
-          # Ensure any buildscript block precedes plugins block (Gradle ordering requirement).
-          bs=re.search(r'buildscript\s*\{.*?\n\}',rt,re.S)
-          pl=re.search(r'plugins\s*\{',rt)
-          if bs and pl and bs.start()>pl.start():
-              block=bs.group(0)
-              rt=rt[:bs.start()]+rt[bs.end():]
+          # Move the complete buildscript block to the absolute beginning of the Gradle file.
+          bs=re.search(r'\bbuildscript\s*\{',rt)
+          if bs:
+              start=bs.start()
+              brace=rt.find('{',bs.start())
+              depth=0; end=None
+              for i,ch in enumerate(rt[brace:],brace):
+                  if ch=='{': depth+=1
+                  elif ch=='}':
+                      depth-=1
+                      if depth==0:
+                          end=i+1; break
+              if end is None: raise SystemExit('Unclosed buildscript block')
+              block=rt[start:end]
+              rt=(rt[:start]+rt[end:]).lstrip()
               rt=block+'\n\n'+rt
           if 'com.google.gms.google-services' not in rt:
               line='id("com.google.gms.google-services") version "4.6.0" apply false' if root.suffix=='.kts' else "id 'com.google.gms.google-services' version '4.6.0' apply false"
