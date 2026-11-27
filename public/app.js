@@ -1625,6 +1625,17 @@ function wireEvents() {
   window.addEventListener("offline", updateNetworkBadge);
 }
 
+// FARMER QAZ Firebase project configuration
+window.__firebase_config = {
+  apiKey: "AIzaSyAt6L086NDd2nFA0DNaulNVD7btofbw28g",
+  authDomain: "farmer-qaz.firebaseapp.com",
+  projectId: "farmer-qaz",
+  storageBucket: "farmer-qaz.firebasestorage.app",
+  messagingSenderId: "827224127592",
+  appId: "1:827224127592:web:79e0da842bdca4425de3dd",
+  measurementId: "G-WLBC2485D5"
+};
+
 // --- BOOT ---
 // Native Android builds ship the web assets inside the APK; do not register the PWA
 // service worker inside the Capacitor WebView. Browser/PWA deployments keep normal SW behavior.
