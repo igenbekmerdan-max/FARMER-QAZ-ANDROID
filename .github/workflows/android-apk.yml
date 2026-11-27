@@ -45,7 +45,13 @@ jobs:
               m=re.search(r'plugins\\s*\\{',at)
               at=at[:m.end()]+'\\n    '+line+at[m.end():] if m else 'plugins {\\n    '+line+'\\n}\\n\\n'+at
               app.write_text(at)
-          print('Google Services plugin applied')
+          # Add Firebase BoM and Analytics dependency to generated app module.
+          at=app.read_text()
+          if 'firebase-bom:35.2.0' not in at:
+              dep='dependencies {\\n    implementation(platform("com.google.firebase:firebase-bom:35.2.0"))\\n    implementation("com.google.firebase:firebase-analytics")\\n}\\n'
+              at += '\\n' + dep
+              app.write_text(at)
+          print('Google Services plugin and Firebase Analytics configured')
           PY
       - run: npx cap sync android
       - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
