@@ -21,58 +21,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      # run: npm install
-      # run: npm test
-      # run: npx cap add android
-      # name: Configure Google Services Gradle plugin
-        #run: |
-         # python3 - <<'PY'
-         # from pathlib import Path
-          #import re
-        #  roots=[Path('android/build.gradle.kts'),Path('android/build.gradle')]
-          #apps=[Path('android/app/build.gradle.kts'),Path('android/app/build.gradle')]
-         # root=next((p for p in roots if p.exists()),None); app=next((p for p in apps if p.exists()),None)
-        #  if not root or not app: raise SystemExit('Generated Gradle files missing')
-       #   rt=root.read_text()
-          # Move the complete buildscript block to the absolute beginning of the Gradle file.
-       #   bs=re.search(r'\bbuildscript\s*\{',rt)
-#          if bs:
-        #      start=bs.start()
-        #      brace=rt.find('{',bs.start())
-         #     depth=0; end=None
-           #   for i,ch in enumerate(rt[brace:],brace):
-            #      if ch=='{': depth+=1
-             #     elif ch=='}':
-              #        depth-=1
-               #       if depth==0:
-                #          end=i+1; break
-         #     if end is None: raise SystemExit('Unclosed buildscript block')
-           #   block=rt[start:end]
-           #   prefix=rt[:start].strip()
-            #  suffix=rt[end:].lstrip()
-           #   rt=block+'\n\n'+(prefix+'\n\n' if prefix else '')+suffix
-        #  if 'com.google.gms.google-services' not in rt:
-           #   line='id("com.google.gms.google-services") version "4.6.0" apply false' if root.suffix=='.kts' else "id 'com.google.gms.google-services' version '4.6.0' apply false"
-          #    m=re.search(r'plugins\s*\{',rt)
-           #   rt=rt[:m.end()]+'\n    '+line+rt[m.end():] if m else 'plugins {\n    '+line+'\n}\n\n'+rt
-        # root.write_text(block + '\n\n' + rt.replace(block, ''))
-        # at=app.read_text()
-       #   if 'com.google.gms.google-services' not in at:
-          #    line='id("com.google.gms.google-services")' if app.suffix=='.kts' else "id 'com.google.gms.google-services'"
-          #    m=re.search(r'plugins\s*\{',at)
-         #     at=at[:m.end()]+'\n    '+line+at[m.end():] if m else 'plugins {\n    '+line+'\n}\n\n'+at
-         #     app.write_text(at)
-       #   # Add Firebase BoM and Analytics dependency to generated app module.
-      #    at=app.read_text()
-     #     if 'firebase-bom:35.2.0' not in at:
-       #       dep='dependencies {\n    implementation(platform("com.google.firebase:firebase-bom:35.2.0"))\n    implementation("com.google.firebase:firebase-analytics")\n}\n'
-       #       at += '\n' + dep
-       #       app.write_text(at)
-     #     print('Google Services plugin and Firebase Analytics configured')
-     #     PY
+      - run: npm install
+      - run: npx cap add android
       - run: npx cap sync android
-       - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
-       - uses: actions/upload-artifact@v4
+      - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
         with:
           name: FARMER-QAZ-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
