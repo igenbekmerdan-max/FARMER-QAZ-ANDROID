@@ -43,6 +43,38 @@ jobs:
       - name: Generate Android project
         run: npx cap add android
 
+      - name: Configure Google Services Gradle plugin
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root_candidates = [Path('android/build.gradle.kts'), Path('android/build.gradle')]
+          app_candidates = [Path('android/app/build.gradle.kts'), Path('android/app/build.gradle')]
+          root = next((p for p in root_candidates if p.exists()), None)
+          app = next((p for p in app_candidates if p.exists()), None)
+          if not root or not app:
+              raise SystemExit('Gradle files not found in generated Android project')
+          root_text = root.read_text()
+          if 'com.google.gms.google-services' not in root_text:
+              plugin_line = ('id("com.google.gms.google-services") version "4.6.0" apply false' if root.suffix == '.kts' else "id 'com.google.gms.google-services' version '4.6.0' apply false")
+              match = re.search(r'plugins\\s*\\{', root_text)
+              if match:
+                  root_text = root_text[:match.end()] + '\\n    ' + plugin_line + root_text[match.end():]
+              else:
+                  root_text = 'plugins {\\n    ' + plugin_line + '\\n}\\n\\n' + root_text
+              root.write_text(root_text)
+          app_text = app.read_text()
+          if 'com.google.gms.google-services' not in app_text:
+              plugin_line = ('id("com.google.gms.google-services")' if app.suffix == '.kts' else "id 'com.google.gms.google-services'")
+              match = re.search(r'plugins\\s*\\{', app_text)
+              if match:
+                  app_text = app_text[:match.end()] + '\\n    ' + plugin_line + app_text[match.end():]
+              else:
+                  app_text = 'plugins {\\n    ' + plugin_line + '\\n}\\n\\n' + app_text
+              app.write_text(app_text)
+          print('Google Services plugin configured')
+          PY
+
       - name: Copy web assets into Android project
         run: npx cap sync android
 
